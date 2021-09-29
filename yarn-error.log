@@ -1,0 +1,49 @@
+Arguments: 
+  /usr/local/bin/node /usr/local/bin/yarn add @openzeppelin/contracts@3
+
+PATH: 
+  /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin:/Users/molin/.cargo/bin:/Users/molin/gopath/bin:/Users/molin/.config/yarn/global/node_modules/.bin:/usr/local/go/bin:/Users/molin/gopath/bin:/Users/molin/.cargo/bin:/Users/molin/.config/yarn/global/node_modules/.bin
+
+Yarn version: 
+  1.22.10
+
+Node version: 
+  14.16.0
+
+Platform: 
+  darwin x64
+
+Trace: 
+  Error: https://github.com/web3-js/WebSocket-Node.git/info/refs?service=git-upload-pack: ETIMEDOUT
+      at Timeout._onTimeout (/usr/local/lib/node_modules/yarn/lib/cli.js:141322:19)
+      at listOnTimeout (internal/timers.js:554:17)
+      at processTimers (internal/timers.js:497:7)
+
+npm manifest: 
+  {
+    "name": "WanSwap-farm",
+    "version": "1.0.0",
+    "license": "MIT",
+    "dependencies": {
+      "@openzeppelin/contracts": "^3.1.0",
+      "@openzeppelin/test-helpers": "^0.5.9",
+      "solidity-coverage": "0.7.4",
+      "truffle": "5.1.22",
+      "truffle-flattener": "^1.4.4",
+      "truffle-plugin-verify": "^0.4.0",
+      "truffle-privatekey-provider": "^1.5.0",
+      "wanchain-truffle-sdk": "^1.0.0"
+    },
+    "scripts": {
+      "compile": "truffle compile",
+      "test": "truffle test",
+      "migrate": "truffle migrate",
+      "coverage": "truffle run coverage"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
