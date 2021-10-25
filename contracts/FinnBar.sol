@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 // FinnBar is the coolest bar in town. You deposit some FINN, and withdraw with more! The longer you stay, the more FINN you get.
 //
 // This contract handles swapping to and from TOM, HuckleberrySwap's staking token.
-contract FinnBar is ERC20("TomToken", "TOM") {
+contract FinnBar is ERC20("TOM Token", "TOM") {
     using SafeMath for uint256;
     IERC20 public finn;
 
