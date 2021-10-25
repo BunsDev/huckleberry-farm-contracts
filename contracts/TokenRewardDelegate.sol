@@ -71,7 +71,7 @@ contract TokenRewardDelegate is Initializable, AccessControl {
     }
 
     modifier onlyValidPool(uint256 _pid) {
-        require(_pid < poolInfo.length,"pid >= poolInfo.length");
+        require(_pid < poolInfo.length,"invalid pid");
         _;
     }
 
@@ -91,9 +91,9 @@ contract TokenRewardDelegate is Initializable, AccessControl {
         external
         onlyOprator
     {
-        require(block.timestamp < _endTime, "block.timestamp >= bonusEndTimestamp");
-        require(_startTime < _endTime, "bonusStartTimestamp >= bonusEndTimestamp");
-        require(_lpToken != address(0), "lpToken == 0");
+        require(block.timestamp < _endTime, "invalid end time");
+        require(_startTime < _endTime, "invalid start time");
+        require(_lpToken != address(0), "invalid lp");
 
         poolInfo.push(PoolInfo({
             lpToken: IERC20(_lpToken),
@@ -218,7 +218,7 @@ contract TokenRewardDelegate is Initializable, AccessControl {
     }
 
     function quitRewardToken(address payable _to, IERC20 rewardToken) external onlyOprator {
-        require(_to != address(0), "to == 0");
+        require(_to != address(0), "invalid to");
         uint256 balance = rewardToken.balanceOf(address(this));
         if (address(rewardToken) == address(0)) {
             wmovr.withdraw(balance);
@@ -259,7 +259,7 @@ contract TokenRewardDelegate is Initializable, AccessControl {
     }
 
     // View function to see pending reward on frontend.
-    function pendingReward(uint256 _pid, address _user) external view onlyValidPool(_pid) returns (uint256, uint256) {
+    function pendingReward(uint256 _pid, address _user) external view onlyValidPool(_pid) returns (uint256) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accRewardPerShare = pool.accRewardPerShare;
@@ -270,7 +270,7 @@ contract TokenRewardDelegate is Initializable, AccessControl {
             uint256 tokenReward = multiplier.mul(pool.rewardPerSecond);
             accRewardPerShare = accRewardPerShare.add(tokenReward.mul(decimalScale).div(pool.currentSupply));
         }
-        return (user.amount, user.amount.mul(accRewardPerShare).div(decimalScale).sub(user.rewardDebt));
+        return user.amount.mul(accRewardPerShare).div(decimalScale).sub(user.rewardDebt);
     }
 
 
