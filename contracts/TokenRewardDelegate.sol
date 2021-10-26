@@ -259,7 +259,7 @@ contract TokenRewardDelegate is Initializable, AccessControl {
     }
 
     // View function to see pending reward on frontend.
-    function pendingReward(uint256 _pid, address _user) external view onlyValidPool(_pid) returns (uint256) {
+    function pendingReward(uint256 _pid, address _user) external view onlyValidPool(_pid) returns (uint256, uint256) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accRewardPerShare = pool.accRewardPerShare;
@@ -270,7 +270,7 @@ contract TokenRewardDelegate is Initializable, AccessControl {
             uint256 tokenReward = multiplier.mul(pool.rewardPerSecond);
             accRewardPerShare = accRewardPerShare.add(tokenReward.mul(decimalScale).div(pool.currentSupply));
         }
-        return user.amount.mul(accRewardPerShare).div(decimalScale).sub(user.rewardDebt);
+        return (user.amount, user.amount.mul(accRewardPerShare).div(decimalScale).sub(user.rewardDebt));
     }
 
 
