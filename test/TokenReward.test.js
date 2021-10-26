@@ -42,6 +42,7 @@ contract('TokenReward', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob
     let endTime;
     let resetExpiredPool;
     let actualRewardTime;
+    let pendingReward;
 
     // beforeEach(async () => {
     before(async () => {
@@ -113,6 +114,11 @@ contract('TokenReward', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob
                 claimTime = pool.endTime;
             }
             return claimTime.sub(depositTime);
+        }
+
+        pendingReward = async function (pid, user) {
+            let pending = await stake.pendingReward(pid, user);
+            return pending[1];
         }
     });
 
@@ -312,7 +318,8 @@ contract('TokenReward', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob
         await time.increaseTo(pools[confPid].startTime.add(time.duration.seconds(10)));
         let rewardDuration = actualRewardTime(pools[confPid], depositTime, (await time.latest()));
         let rewardValue = pools[confPid].rewardPerSecond.mul(time.duration.seconds(rewardDuration));
-        assert.strictEqual((await stake.pendingReward(pid, alice)).eq(rewardValue), true, "invalid pool user pending reward");
+        assert.strictEqual((await pendingReward(pid, alice)).eq(rewardValue), true, "invalid pool user pending reward");
+        // assert.strictEqual((await stake.pendingReward(pid, alice)).eq(rewardValue), true, "invalid pool user pending reward");
 
         await time.increaseTo(pools[confPid].endTime);
 
