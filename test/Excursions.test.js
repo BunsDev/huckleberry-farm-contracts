@@ -1,12 +1,12 @@
 const assert = require('assert');
 const { expectRevert, time } = require('@openzeppelin/test-helpers');
 const { web3 } = require("@openzeppelin/test-helpers/src/setup");
-const TokenRewardDelegate = artifacts.require("TokenRewardDelegate");
+const Excursions = artifacts.require("Excursions");
 const HuckleberryProxy = artifacts.require("HuckleberryProxy");
 const WMOVR = artifacts.require("WMOVR");
 const MockERC20 = artifacts.require("MockERC20");
 
-contract('TokenReward', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob, carol]) => {
+contract('Excursions', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob, carol]) => {
     const zero = new web3.utils.BN(0);
     const two = new web3.utils.BN(2);
     const three = new web3.utils.BN(3);
@@ -46,7 +46,7 @@ contract('TokenReward', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob
 
     // beforeEach(async () => {
     before(async () => {
-        stake = await TokenRewardDelegate.new();
+        stake = await Excursions.new();
 
         // deploy WMOVR
         wmovr = await WMOVR.new({from: owner});

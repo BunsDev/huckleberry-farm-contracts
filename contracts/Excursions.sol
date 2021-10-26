@@ -17,7 +17,7 @@ interface IRewardToken {
     function decimals() external view returns(uint8);
 }
 
-contract TokenRewardDelegate is Initializable, AccessControl {
+contract Excursions is Initializable, AccessControl {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -65,7 +65,7 @@ contract TokenRewardDelegate is Initializable, AccessControl {
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
 
-    modifier onlyOprator() {
+    modifier onlyOperator() {
         require(hasRole(OPERATOR_ROLE, msg.sender), "not operator");
         _;
     }
@@ -75,13 +75,13 @@ contract TokenRewardDelegate is Initializable, AccessControl {
         _;
     }
 
-    function initialize(address admin, address oprator, IWMOVR _wcoin)
+    function initialize(address admin, address operator, IWMOVR _wcoin)
         external
         payable
         initializer
     {
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
-        _setupRole(OPERATOR_ROLE, oprator);
+        _setupRole(OPERATOR_ROLE, operator);
         wmovr = _wcoin;
     }
 
@@ -89,7 +89,7 @@ contract TokenRewardDelegate is Initializable, AccessControl {
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
     function add(address _lpToken, address _rewardToken, uint256 _startTime, uint256 _endTime, uint256 _rewardPerSecond)
         external
-        onlyOprator
+        onlyOperator
     {
         require(block.timestamp < _endTime, "invalid end time");
         require(_startTime < _endTime, "invalid start time");
@@ -112,7 +112,7 @@ contract TokenRewardDelegate is Initializable, AccessControl {
     // Update the given pool's. Can only be called by the owner.
     function set(uint256 _pid, uint256 _rewardPerSecond, uint256 _endTime, bool _withUpdate)
         external
-        onlyOprator
+        onlyOperator
     {
         if (_withUpdate) {
             massUpdatePools();
@@ -217,7 +217,7 @@ contract TokenRewardDelegate is Initializable, AccessControl {
         emit EmergencyWithdraw(msg.sender, _pid, amount);
     }
 
-    function quitRewardToken(address payable _to, IERC20 rewardToken) external onlyOprator {
+    function quitRewardToken(address payable _to, IERC20 rewardToken) external onlyOperator {
         require(_to != address(0), "invalid to");
         uint256 balance = rewardToken.balanceOf(address(this));
         if (address(rewardToken) == address(0)) {
