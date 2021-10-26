@@ -2,28 +2,23 @@ const assert = require('assert');
 const { expectRevert, time } = require('@openzeppelin/test-helpers');
 const { web3 } = require("@openzeppelin/test-helpers/src/setup");
 const Excursions = artifacts.require("Excursions");
-const HuckleberryProxy = artifacts.require("HuckleberryProxy");
 const WMOVR = artifacts.require("WMOVR");
 const MockERC20 = artifacts.require("MockERC20");
 
-contract('Excursions', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob, carol]) => {
+contract('Excursions', ([owner, delegateAdmin, operator, alice, bob, carol]) => {
     const zero = new web3.utils.BN(0);
     const two = new web3.utils.BN(2);
     const three = new web3.utils.BN(3);
-    const four = new web3.utils.BN(4);
     const six = new web3.utils.BN(6);
     const ten = new web3.utils.BN(10);
-    const twelve = new web3.utils.BN(12);
     const eighteen = new web3.utils.BN(18);
     const thirtyTwo = new web3.utils.BN(32);
     const decimals18 = ten.pow(eighteen);
     const decimals6 = ten.pow(six);
-    // const totalSupply18 = ten.pow(four).mul(decimals18);
     const totalSupply18 = ten.pow(ten).mul(decimals18);
     const transferAmount18 = ten.pow(three).mul(decimals18);
     const stakeAmount18 = ten.pow(two).mul(decimals18);
     const totalSupply6 = ten.pow(ten).mul(decimals6);
-    const transferAmount6 = ten.pow(three).mul(decimals6);
     const stakeAmount6 = ten.pow(two).mul(decimals6);
 
     const startDuration = time.duration.hours(10);
@@ -78,7 +73,6 @@ contract('Excursions', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob,
             endTime: endTime,
             rewardPerSecond: rewardPerSecond18,
             totalReward: totalReward18,
-            decimalScale: ten.pow(new web3.utils.BN(12)),
         });
 
         // pool 1 config --- reward token decimals is 6
@@ -89,7 +83,6 @@ contract('Excursions', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob,
             endTime: endTime,
             rewardPerSecond: rewardPerSecond6,
             totalReward: totalReward6,
-            decimalScale: ten.pow(new web3.utils.BN(32)),
         });
 
         resetExpiredPool = async function(pool, startDelaySecond) {
@@ -155,7 +148,6 @@ contract('Excursions', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob,
         assert.strictEqual(pInfo.bonusStartTimestamp.eq(pools[confPid].startTime), true, "invalid pool startTime");
         assert.strictEqual(pInfo.bonusEndTimestamp.eq(pools[confPid].endTime), true, "invalid pool endTime");
         assert.strictEqual(pInfo.rewardPerSecond.eq(pools[confPid].rewardPerSecond), true, "invalid pool rewardPerSecond");
-        assert.strictEqual(pInfo.decimalScale.eq(pools[confPid].decimalScale), true, "invalid pool decimalScale");
     });
 
     it('add pool with reward token decimals 6', async () => {
@@ -168,7 +160,6 @@ contract('Excursions', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob,
         assert.strictEqual(pInfo.bonusStartTimestamp.eq(pools[confPid].startTime), true, "invalid pool 1 startTime");
         assert.strictEqual(pInfo.bonusEndTimestamp.eq(pools[confPid].endTime), true, "invalid pool 1 endTime");
         assert.strictEqual(pInfo.rewardPerSecond.eq(pools[confPid].rewardPerSecond), true, "invalid pool 1 rewardPerSecond");
-        assert.strictEqual(pInfo.decimalScale.eq(pools[confPid].decimalScale), true, "invalid pool 1 decimalScale");
     });
 
     it('set pool', async () => {
@@ -177,6 +168,17 @@ contract('Excursions', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob,
         await stake.add(pools[confPid].lpToken.address, pools[confPid].rewardToken.address, pools[confPid].startTime, pools[confPid].endTime, pools[confPid].rewardPerSecond, {from: operator});
         var pOldInfo = await stake.poolInfo(pid);
         await stake.set(pid, pools[confPid].rewardPerSecond.mul(two), pools[confPid].endTime.mul(two), false, {from: operator});
+        var pNewInfo = await stake.poolInfo(pid);
+        assert.strictEqual(pOldInfo.rewardPerSecond.eq(pNewInfo.rewardPerSecond), false, "invalid pool rewardPerSecond");
+        assert.strictEqual(pOldInfo.bonusEndTimestamp.eq(pNewInfo.bonusStartTimestamp), false, "invalid pool endTime");
+    });
+
+    it('set pool with update', async () => {
+        let confPid = 0;
+        let pid = await stake.poolLength();
+        await stake.add(pools[confPid].lpToken.address, pools[confPid].rewardToken.address, pools[confPid].startTime, pools[confPid].endTime, pools[confPid].rewardPerSecond, {from: operator});
+        var pOldInfo = await stake.poolInfo(pid);
+        await stake.set(pid, pools[confPid].rewardPerSecond.mul(two), pools[confPid].endTime.mul(two), true, {from: operator});
         var pNewInfo = await stake.poolInfo(pid);
         assert.strictEqual(pOldInfo.rewardPerSecond.eq(pNewInfo.rewardPerSecond), false, "invalid pool rewardPerSecond");
         assert.strictEqual(pOldInfo.bonusEndTimestamp.eq(pNewInfo.bonusStartTimestamp), false, "invalid pool endTime");

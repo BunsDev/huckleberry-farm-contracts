@@ -13,10 +13,6 @@ interface IWMOVR {
     function withdraw(uint) external;
 }
 
-interface IRewardToken {
-    function decimals() external view returns(uint8);
-}
-
 contract Excursions is Initializable, AccessControl {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -45,7 +41,6 @@ contract Excursions is Initializable, AccessControl {
         IERC20  lpToken;          // Address of LP token contract.
         IERC20  rewardToken;      // token address for reward
 
-        uint256 decimalScale;
         uint256 currentSupply;   //
         uint256 bonusStartTimestamp;  //
         uint256 bonusEndTimestamp;    // Block number when bonus period ends.
@@ -75,14 +70,14 @@ contract Excursions is Initializable, AccessControl {
         _;
     }
 
-    function initialize(address admin, address operator, IWMOVR _wcoin)
+    function initialize(address admin, address operator, IWMOVR _wmovr)
         external
         payable
         initializer
     {
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
         _setupRole(OPERATOR_ROLE, operator);
-        wmovr = _wcoin;
+        wmovr = _wmovr;
     }
 
     // Add a new lp to the pool. Can only be called by the owner.
@@ -94,11 +89,11 @@ contract Excursions is Initializable, AccessControl {
         require(block.timestamp < _endTime, "invalid end time");
         require(_startTime < _endTime, "invalid start time");
         require(_lpToken != address(0), "invalid lp");
+        require(_rewardToken != address(0), "invalid reward token");
 
         poolInfo.push(PoolInfo({
             lpToken: IERC20(_lpToken),
             rewardToken: IERC20(_rewardToken),
-            decimalScale: IRewardToken(_rewardToken).decimals() == 18 ? 1e12 : 1e32,
             currentSupply: 0,
             bonusStartTimestamp: _startTime,
             bonusEndTimestamp: _endTime,
@@ -115,7 +110,7 @@ contract Excursions is Initializable, AccessControl {
         onlyOperator
     {
         if (_withUpdate) {
-            massUpdatePools();
+            updatePool(_pid);
         }
         poolInfo[_pid].rewardPerSecond = _rewardPerSecond;
         poolInfo[_pid].bonusEndTimestamp = _endTime;
@@ -145,25 +140,24 @@ contract Excursions is Initializable, AccessControl {
 
         uint256 multiplier = getMultiplier(pool.lastRewardTimestamp, block.timestamp, pool.bonusStartTimestamp, pool.bonusEndTimestamp);
         uint256 tokenReward = multiplier.mul(pool.rewardPerSecond);
-        pool.accRewardPerShare = pool.accRewardPerShare.add(tokenReward.mul(pool.decimalScale).div(pool.currentSupply));
+        pool.accRewardPerShare = pool.accRewardPerShare.add(tokenReward.mul(1e32).div(pool.currentSupply));
         pool.lastRewardTimestamp = block.timestamp;
     }
 
     function deposit(uint256 _pid, uint256 _amount) external onlyValidPool(_pid) {
         PoolInfo storage pool = poolInfo[_pid];
-        uint256 decimalScale = pool.decimalScale;
 
         updatePool(_pid);
 
         UserInfo storage user = userInfo[_pid][msg.sender];
 
-        uint256 pending = user.amount.mul(pool.accRewardPerShare).div(decimalScale).sub(user.rewardDebt);
+        uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e32).sub(user.rewardDebt);
 
         pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
 
         user.amount = user.amount.add(_amount);
         pool.currentSupply = pool.currentSupply.add(_amount);
-        user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(decimalScale);
+        user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e32);
 
         if(pending > 0) {
             if (address(pool.rewardToken) == address(wmovr)) { // convert wmovr to wan 
@@ -180,10 +174,9 @@ contract Excursions is Initializable, AccessControl {
     function withdraw(uint256 _pid, uint256 _amount) external onlyValidPool(_pid) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        uint256 decimalScale = pool.decimalScale;
 
         updatePool(_pid);
-        uint256 pending = user.amount.mul(pool.accRewardPerShare).div(decimalScale).sub(user.rewardDebt);
+        uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e32).sub(user.rewardDebt);
 
         if(_amount > 0) {
             user.amount = user.amount.sub(_amount);
@@ -191,7 +184,7 @@ contract Excursions is Initializable, AccessControl {
             pool.lpToken.safeTransfer(msg.sender, _amount);
         }
 
-        user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(decimalScale);
+        user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e32);
         if(pending > 0) {
             if (address(pool.rewardToken) == address(wmovr)) { // convert wmovr to movr 
                 wmovr.withdraw(pending);
@@ -263,14 +256,13 @@ contract Excursions is Initializable, AccessControl {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accRewardPerShare = pool.accRewardPerShare;
-        uint256 decimalScale = pool.decimalScale;
 
         if (block.timestamp > pool.lastRewardTimestamp && pool.currentSupply != 0) {
             uint256 multiplier = getMultiplier(pool.lastRewardTimestamp, block.timestamp, pool.bonusStartTimestamp, pool.bonusEndTimestamp);
             uint256 tokenReward = multiplier.mul(pool.rewardPerSecond);
-            accRewardPerShare = accRewardPerShare.add(tokenReward.mul(decimalScale).div(pool.currentSupply));
+            accRewardPerShare = accRewardPerShare.add(tokenReward.mul(1e32).div(pool.currentSupply));
         }
-        return (user.amount, user.amount.mul(accRewardPerShare).div(decimalScale).sub(user.rewardDebt));
+        return (user.amount, user.amount.mul(accRewardPerShare).div(1e32).sub(user.rewardDebt));
     }
 
 
