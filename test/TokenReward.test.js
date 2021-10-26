@@ -130,6 +130,21 @@ contract('TokenReward', ([owner, proxyAdmin, delegateAdmin, operator, alice, bob
         await expectRevert(stake.initialize(delegateAdmin, operator, wmovr.address, {from: owner}), 'Initializable: contract is already initialized');
     });
 
+    it('update operator', async () => {
+        let OPERATOR_ROLE = await stake.OPERATOR_ROLE();
+        await stake.revokeRole(OPERATOR_ROLE, operator, {from: delegateAdmin});
+        assert.strictEqual((await stake.hasRole(OPERATOR_ROLE, operator)), false, "revoke operator failed");
+
+        await stake.grantRole(OPERATOR_ROLE, delegateAdmin, {from: delegateAdmin});
+        assert.strictEqual((await stake.hasRole(OPERATOR_ROLE, delegateAdmin)), true, "grant admin to operator failed");
+
+        await stake.revokeRole(OPERATOR_ROLE, delegateAdmin, {from: delegateAdmin});
+        assert.strictEqual((await stake.hasRole(OPERATOR_ROLE, delegateAdmin)), false, "revoke admin to operator failed");
+
+        await stake.grantRole(OPERATOR_ROLE, operator, {from: delegateAdmin});
+        assert.strictEqual((await stake.hasRole(OPERATOR_ROLE, operator)), true, "reset operator failed");
+    });
+
     it('add pool with reward token decimals 18', async () => {
         let confPid = 0;
         let pid = await stake.poolLength();
