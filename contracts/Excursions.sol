@@ -181,10 +181,12 @@ contract Excursions is Initializable, AccessControl {
         if(_amount > 0) {
             user.amount = user.amount.sub(_amount);
             pool.currentSupply = pool.currentSupply.sub(_amount);
+        }
+        user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e32);
+
+        if (_amount > 0) {
             pool.lpToken.safeTransfer(msg.sender, _amount);
         }
-
-        user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e32);
         if(pending > 0) {
             if (address(pool.rewardToken) == address(wmovr)) { // convert wmovr to movr 
                 wmovr.withdraw(pending);
