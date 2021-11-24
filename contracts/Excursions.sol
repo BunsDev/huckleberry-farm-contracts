@@ -105,13 +105,11 @@ contract Excursions is Initializable, AccessControl {
     }
 
     // Update the given pool's. Can only be called by the owner.
-    function set(uint256 _pid, uint256 _rewardPerSecond, uint256 _endTime, bool _withUpdate)
+    function set(uint256 _pid, uint256 _rewardPerSecond, uint256 _endTime)
         external
         onlyOperator
     {
-        if (_withUpdate) {
-            updatePool(_pid);
-        }
+        updatePool(_pid);
         poolInfo[_pid].rewardPerSecond = _rewardPerSecond;
         poolInfo[_pid].bonusEndTimestamp = _endTime;
 
