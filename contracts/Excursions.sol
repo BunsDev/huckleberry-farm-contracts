@@ -212,17 +212,6 @@ contract Excursions is Initializable, AccessControl {
         emit EmergencyWithdraw(msg.sender, _pid, amount);
     }
 
-    function quitRewardToken(address payable _to, IERC20 rewardToken) external onlyOperator {
-        require(_to != address(0), "invalid to");
-        uint256 balance = rewardToken.balanceOf(address(this));
-        if (address(rewardToken) == address(0)) {
-            wmovr.withdraw(balance);
-            _to.transfer(balance);
-        } else {
-            rewardToken.safeTransfer(_to, balance);
-        }
-    }
-
     receive() external payable {
         require(msg.sender == address(wmovr), "Only support value from WMOVR"); // only accept MOVR via fallback from the WMOVR contract
     }
