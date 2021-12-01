@@ -73,7 +73,6 @@ contract Excursions is Initializable, AccessControl {
 
     function initialize(address admin, address operator, IWMOVR _wmovr, address _tom)
         external
-        payable
         initializer
     {
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
