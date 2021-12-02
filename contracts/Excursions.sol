@@ -93,7 +93,7 @@ contract Excursions is Initializable, AccessControl {
         require(_rewardToken != address(0), "invalid reward token");
         require(_rewardToken != _lpToken, "reward token cannot be same with lpToken");
         require(!isCollateral[_rewardToken], "collateral cannot use for reward");
-        require(!isRewardToken[_lpToken], "collateral cannot use for reward");
+        require(!isRewardToken[_lpToken], "reward token cannot use for collateral");
         isCollateral[_lpToken] = true;
         isRewardToken[_rewardToken] = true;
 
