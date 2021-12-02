@@ -53,8 +53,8 @@ contract Excursions is Initializable, AccessControl {
     IWMOVR public wmovr;            // The WMOVR contract
     PoolInfo[] public poolInfo;   // Info of each pool.
     mapping (uint256 => mapping (address => UserInfo)) public userInfo;// Info of each user that stakes LP tokens.
-
-    address public tom;
+    mapping (address => bool) public isCollateral;
+    
     event Add(uint256 indexed pid, address indexed lpToken, address indexed rewardToken, uint256 startTime, uint256 endTime, uint256 rewardPerSecond);
     event Set(uint256 indexed pid, uint256 endTime, uint256 rewardPerSecond);
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
@@ -71,14 +71,13 @@ contract Excursions is Initializable, AccessControl {
         _;
     }
 
-    function initialize(address admin, address operator, IWMOVR _wmovr, address _tom)
+    function initialize(address admin, address operator, IWMOVR _wmovr)
         external
         initializer
     {
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
         _setupRole(OPERATOR_ROLE, operator);
         wmovr = _wmovr;
-        tom = _tom;
     }
 
     // Add a new lp to the pool. Can only be called by the owner.
@@ -91,8 +90,9 @@ contract Excursions is Initializable, AccessControl {
         require(_startTime < _endTime, "invalid start time");
         require(_lpToken != address(0), "invalid lp");
         require(_rewardToken != address(0), "invalid reward token");
-        require(_rewardToken != tom, "reward token cannot be tom");
         require(_rewardToken != _lpToken, "reward token cannot be same with lpToken");
+        require(!isCollateral(_rewardToken), "collateral cannot use for reward");
+        isCollateral[_lpToken] = true;
 
         poolInfo.push(PoolInfo({
             lpToken: IERC20(_lpToken),
