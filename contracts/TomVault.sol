@@ -79,6 +79,7 @@ contract TomVault is ERC20("mTOM Token", "mTOM"), Pausable, AccessControl {
         _setupRole(OPERATOR_ROLE, _operator);
 
         // Infinite approve
+        IERC20(_token.finn()).safeApprove(address(_token), uint256(-1));
         _token.safeApprove(address(_farm), uint256(-1));
     }
 
@@ -140,30 +141,47 @@ contract TomVault is ERC20("mTOM Token", "mTOM"), Pausable, AccessControl {
      * @notice Withdraws all funds for a user
      */
     function withdrawAll() external {
-        withdraw(balanceOf(msg.sender));
+        withdrawShares(balanceOf(msg.sender));
     }
 
-    /**
-     * @notice Withdraws from funds from the Tom Vault
-     * @param _shares: Number of shares to withdraw
-     */
-    function withdraw(uint256 _shares) public notContract {
+    function withdrawShares(uint256 _shares) public notContract {
+        _withdraw(0);
+
         uint256 currentAmount = (balanceOf().mul(_shares)).div(totalSupply());
         _burn(msg.sender, _shares);
 
         uint256 bal = available();
-        bool needWithdrawAndEarn = bal < currentAmount;
-        if (needWithdrawAndEarn) {
+        if (bal < currentAmount) {
             _withdraw(currentAmount.sub(bal));
         }
 
         tom.safeTransfer(msg.sender, currentAmount);
 
-        if (needWithdrawAndEarn) {
-            _earn();
-        }
+        _earn();
 
         emit Withdraw(msg.sender, currentAmount, _shares);
+    }
+
+    /**
+     * @notice Withdraws from funds from the Tom Vault
+     * @param _amount: number of tokens to withdraw (in TOM)
+     */
+    function withdraw(uint256 _amount) public notContract {
+        _withdraw(0);
+
+        uint256 currentShares = (_amount.mul(totalSupply())).div(balanceOf());
+        _burn(msg.sender, currentShares);
+
+        uint256 bal = available();
+        if (bal < _amount) {
+            _withdraw(_amount.sub(bal));
+        }
+
+        tom.safeTransfer(msg.sender, _amount);
+
+        _earn();
+
+        emit Withdraw(msg.sender, _amount, currentShares);
     }
 
     /**
@@ -306,7 +324,13 @@ contract TomVault is ERC20("mTOM Token", "mTOM"), Pausable, AccessControl {
     function _earn() internal {
         uint256 bal = available();
         if (bal > 0) {
-            farm.deposit(poolID, bal);
+            ITOM tomToken = tom;
+            IFarm farmInst = farm;
+            if (tomToken.allowance(address(this), address(farmInst)) < bal) {
+                tomToken.safeApprove(address(farmInst), uint256(-1));
+            }
+
+            farmInst.deposit(poolID, bal);
         }
     }
 }
