@@ -170,6 +170,7 @@ contract TomVault is ERC20("mTOM Token", "mTOM"), Pausable, AccessControl {
         _withdraw(0);
 
         uint256 currentShares = (_amount.mul(totalSupply())).div(balanceOf());
+        require(currentShares > 0, "too small shares");
         _burn(msg.sender, currentShares);
 
         uint256 bal = available();
