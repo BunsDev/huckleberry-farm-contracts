@@ -126,7 +126,7 @@ contract TomVault is ERC20("mTOM Token", "mTOM"), Pausable, AccessControl {
         uint256 currentShares;
         if (totalSupply() != 0) {
             _withdraw(0);
-            currentShares = (_amount.mul(totalSupply())).div(balanceOf().sub(_amount));
+            currentShares = (_amount.mul(totalSupply())).div(totalBalance().sub(_amount));
         } else {
             currentShares = _amount;
         }
@@ -147,7 +147,7 @@ contract TomVault is ERC20("mTOM Token", "mTOM"), Pausable, AccessControl {
     function withdrawShares(uint256 _shares) public notContract {
         _withdraw(0);
 
-        uint256 currentAmount = (balanceOf().mul(_shares)).div(totalSupply());
+        uint256 currentAmount = (totalBalance().mul(_shares)).div(totalSupply());
         _burn(msg.sender, _shares);
 
         uint256 bal = available();
@@ -169,7 +169,7 @@ contract TomVault is ERC20("mTOM Token", "mTOM"), Pausable, AccessControl {
     function withdraw(uint256 _amount) public notContract {
         _withdraw(0);
 
-        uint256 currentShares = (_amount.mul(totalSupply())).div(balanceOf());
+        uint256 currentShares = (_amount.mul(totalSupply())).div(totalBalance());
         require(currentShares > 0, "too small shares");
         _burn(msg.sender, currentShares);
 
@@ -275,7 +275,7 @@ contract TomVault is ERC20("mTOM Token", "mTOM"), Pausable, AccessControl {
      * @notice Calculates the price per share
      */
     function getPricePerFullShare() external view returns (uint256) {
-        return totalSupply() == 0 ? 1e18 : balanceOf().mul(1e18).div(totalSupply());
+        return totalSupply() == 0 ? 1e18 : totalBalance().mul(1e18).div(totalSupply());
     }
 
     /**
@@ -290,7 +290,7 @@ contract TomVault is ERC20("mTOM Token", "mTOM"), Pausable, AccessControl {
      * @notice Calculates the total underlying tokens
      * @dev It includes tokens held by the contract and held in HuckleberryFarm
      */
-    function balanceOf() public view returns (uint256) {
+    function totalBalance() public view returns (uint256) {
         (uint256 amount, ) = farm.userInfo(poolID, address(this));
         return tom.balanceOf(address(this)).add(amount);
     }
